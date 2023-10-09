@@ -1,7 +1,8 @@
 import User from "../models/user.js";
 import bcryptjs from "bcryptjs";
+import { errorHandler } from "../utils/error.js";
 
-export const signup = async (req, res) => {
+export const signup = async (req, res, next) => {
     const { username, email, password } = req.body;
     if (!username || !email || !password) {
         return res
@@ -17,7 +18,6 @@ export const signup = async (req, res) => {
         });
         res.status(201).json(user);
     } catch (error) {
-        console.log(error);
-        res.status(500).json(error);
+        next(errorHandler(590, "error in signup function!", error));
     }
 };
