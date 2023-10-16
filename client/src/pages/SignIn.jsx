@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+    signInStart,
+    signInSuccess,
+    signInFailed,
+} from "../app/user/userSlice";
 
 export default function SignIn() {
     const [formData, setFormData] = useState({});
-    const [error, setError] = useState(null);
-    const [errdet, setErrdet] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const { loading, error } = useSelector((state) => state.user);
 
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const handleChange = (e) => {
         setFormData({
@@ -18,24 +23,26 @@ export default function SignIn() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        const res = await fetch("/api/auth/signin", {
-            method: "post",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-        });
-        const data = await res.json();
-        if (data.success === false) {
-            setError(data.message);
-            setErrdet(data.details);
-            setLoading(false);
-            return;
+        try {
+            dispatch(signInStart());
+            const res = await fetch("/api/auth/signin", {
+                method: "post",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+            const data = await res.json();
+            if (data.success === false) {
+                dispatch(signInFailed(data.message));
+                console.log(data);
+                return;
+            }
+            dispatch(signInSuccess(data));
+            navigate("/");
+        } catch (error) {
+            dispatch(signInFailed(error.message));
         }
-        setLoading(false);
-        setError(null);
-        navigate("/");
     };
 
     return (
@@ -70,7 +77,6 @@ export default function SignIn() {
                 </Link>
             </div>
             {error && <p className="text-red-500 mt-5">{error}</p>}
-            {errdet && <p className="text-red-500 mt-5">{errdet}</p>}
         </div>
     );
 }
